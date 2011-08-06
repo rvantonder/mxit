@@ -1,0 +1,30 @@
+git config --global user.name "Rai"
+git config --global user.email rvantonder@gmail.com
+
+-------------------------------------------------------------------------
+if new computer: generate rsa key using:
+
+ssh-keygen -t rsa -P "" en stuur vir my id_rsa.pub located in ~/.ssh/
+
+dan:
+
+git clone git@github.com:sponsy/archat.git
+------------------------------------------------------------------------
+
+git pull -u origin master
+
+work en doen whatever
+
+git commit -a -m "informative message of change"
+
+git push -u origin master 
+
+
+
+Dis al vir nou. ander important commands:
+
+git log
+git checkout <git commit name> //reset to a previous 'state', directories 
+git branch <name of branch>
+
+sien http://www-cs-students.stanford.edu/~blynn/gitmagic/ch02.html

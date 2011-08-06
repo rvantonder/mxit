@@ -1,0 +1,93 @@
+#!/usr/bin/env python
+
+"""
+An echo client that allows the user to send multiple lines to the server.
+Entering a blank line will exit the client.
+"""
+
+import socket
+import sys
+import select
+from logger import Logger
+
+class Client:
+
+    def __init__(self, ip, port):
+        self.host = ip
+        self.port = port 
+        self.size = 1024
+        self.socket = None
+        self.username = ''
+        clientLogger = Logger('client.log')
+        clientLogger.logger.info('Starting client.');
+        self.msg = [0x6c, 0x6e, 0x3d, 0x31, 0x34, 0x35, 0x00, 0x69, 
+0x64, 0x3d, 0x30, 0x37, 0x31, 0x36, 0x32, 0x32, 
+0x33, 0x39, 0x31, 0x37, 0x00, 0x63, 0x6d, 0x3d, 
+0x31, 0x00, 0x6d, 0x73, 0x3d, 0x33, 0x4e, 0x5a, 
+0x6a, 0x62, 0x76, 0x35, 0x53, 0x30, 0x32, 0x71, 
+0x4b, 0x30, 0x59, 0x6b, 0x6f, 0x4f, 0x6a, 0x69, 
+0x51, 0x72, 0x77, 0x3d, 0x3d, 0x01, 0x50, 0x2d, 
+0x35, 0x2e, 0x39, 0x2e, 0x30, 0x2d, 0x59, 0x2d, 
+0x50, 0x55, 0x52, 0x50, 0x4c, 0x45, 0x01, 0x31, 
+0x01, 0x75, 0x74, 0x66, 0x38, 0x3d, 0x74, 0x72, 
+0x75, 0x65, 0x3b, 0x63, 0x69, 0x64, 0x3d, 0x4c, 
+0x50, 0x01, 0x34, 0x44, 0x46, 0x37, 0x38, 0x32, 
+0x38, 0x39, 0x2d, 0x33, 0x35, 0x37, 0x38, 0x2d, 
+0x34, 0x37, 0x30, 0x31, 0x2d, 0x38, 0x31, 0x43, 
+0x31, 0x2d, 0x37, 0x36, 0x30, 0x32, 0x32, 0x35, 
+0x42, 0x41, 0x45, 0x34, 0x36, 0x43, 0x01, 0x31, 
+0x33, 0x33, 0x39, 0x37, 0x35, 0x34, 0x01, 0x32, 
+0x37, 0x01, 0x65, 0x6e, 0x01, 0x31, 0x35, 0x30, 
+0x30, 0x30, 0x30, 0x01, 0x36, 0x30, 0x01, 0x30]
+        self.outfile = open('a.out', 'w')
+
+    def open_socket(self):
+        try:
+          self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+          self.socket.connect((self.host, self.port))
+        except socket.error:
+          print "error, server refused connection"
+
+    def close_socket(self):
+        self.socket.close()
+        clientLogger.logger.info('Connection closed.')
+  
+    def send(self, message):
+        self.socket.send(message)
+         
+    def tohex(self, msg):
+      return ''.join(map(lambda x: chr(x), msg))
+
+    def process(self, response):
+      self.outfile.write(response) 
+
+    def run(self):       
+        input = [self.socket, sys.stdin]
+
+        self.send(self.tohex(self.msg))
+
+        while 1:
+            inputready,outputready,exceptready = select.select(input,[],[])
+            # read from keyboard
+            for item in inputready:
+                if item == sys.stdin: #if input from terminal
+                    line = sys.stdin.readline()
+                    if line == '\n':
+                        break
+                    self.send(line)
+                else: #if socket
+                    response = self.socket.recv(self.size)
+                    self.process(response)
+                    sys.stdout.write(str(len(response)))
+        self.close_socket()
+
+if __name__ == '__main__':
+
+    clientLogger = Logger('client.log')
+    clientLogger.logger.info('Starting client.');
+
+    c = Client('41.191.124.10', int(9119))
+    c.open_socket()
+
+    c.run()
+
