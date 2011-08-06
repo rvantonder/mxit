@@ -64,7 +64,7 @@ class ClientForm(QtGui.QWidget):
 0x30, 0x30, 0x30, 0x01, 0x36, 0x30, 0x01, 0x30]
 
   def activated(self, text):
-    self.ui.textEdit.setText(text)
+    self.ui.textEdit.append(text)
 
   def on_lineEdit_returnPressed(self):
     if self.ui.lineEdit.displayText() != '':
@@ -86,7 +86,8 @@ class Receiver(QtCore.QThread):
       try:
         response = self.client.socket.recv(self.client.size)
         print response
-        self.emit(QtCore.SIGNAL("Activated( QString )"), response)
+        display = filter(lambda x: ord(x) > 0x30, response)
+        self.emit(QtCore.SIGNAL("Activated( QString )"), display)
       except socket.error:
         return
           
