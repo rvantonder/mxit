@@ -1,5 +1,4 @@
-import threading
-from clientgui import ClientForm
+from mxitgui import ClientForm
 from PyQt4 import QtCore, QtGui
 import sys
 

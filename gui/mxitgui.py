@@ -3,29 +3,28 @@
 import sip
 sip.setapi('QVariant', 2)
 import sys
-from subprocess import Popen
-import subprocess
-from client import *  #import the client
+from connection import * 
 import select
 import threading
 from logger import Logger
-import socket
 import pickle
 import os
 
 from PyQt4 import QtCore, QtGui
-from clientwindow import Ui_Form
+from mxitwindow import Ui_Form
 
 """
 The Client GUI class.
 """
 
 class ClientForm(QtGui.QWidget):
-  def __init__(self, host, port):
+  def __init__(self, host, port, username, password, nick):
     super(ClientForm, self).__init__()
-    self.client = Client(host,port)
+    self.connection = Connection(host, port, username, password, nick)
 
-    self.client.open_socket()    
+
+    self.connection.connect()
+    self.connection.login()
 
     self.ui = Ui_Form()
     self.ui.setupUi(self)
@@ -42,7 +41,6 @@ class ClientForm(QtGui.QWidget):
     self.connect(self.receiver, QtCore.SIGNAL("Activated ( QString ) "), self.activated)
     self.receiver.start()
 
-#    self.msg = 'ln=145\x00id=0716223917\x00cm=1\x00ms=3NZjbv5S02qK0YkoOjiQrw==\x01P-5.9.0-Y-PURPLE\x011\x01utf8=true;cid=LP\x014DF78289-3578-4701-81C1-760225BAE46C\x011339754\x0127\x01en\x01150000\x0160\x010'
     self.msg = [0x6c, 0x6e, 0x3d, 0x31, 0x34, 0x35, 0x00, 0x69, 
 0x64, 0x3d, 0x30, 0x37, 0x31, 0x36, 0x32, 0x32, 
 0x33, 0x39, 0x31, 0x37, 0x00, 0x63, 0x6d, 0x3d, 
@@ -68,7 +66,6 @@ class ClientForm(QtGui.QWidget):
 
   def on_lineEdit_returnPressed(self):
     if self.ui.lineEdit.displayText() != '':
-      #stringToSend = self.ui.lineEdit.displayText()
       print 'sending',''.join(map(lambda x:chr(x), self.msg))
       self.client.socket.send(str(''.join(map(lambda x:chr(x), self.msg))))
                    
