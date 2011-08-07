@@ -8,17 +8,16 @@ from messages import *
 
 class Connection:
 
-  def __init__(self, ip, port, username, password, nick):
+  def __init__(self, ip, port, username, password):
     self.host = ip
     self.port = port 
     self.size = 1024
     self.socket = None
 
-    self.username = username
+    self.id = username
 
     self.properties = { 
       'password':password,
-      'nick':nick,
       'version':'P- 5.9.0-Y-PURPLE', 
       'getContacts':'1',
       'capabilities':'utf8=true;cid=LP',
@@ -28,7 +27,6 @@ class Connection:
       'locale':'en',
       'maxReplyLen':150000,
       'protocolVer':60,
-      'splashName':0
     }
 
 
@@ -40,5 +38,7 @@ class Connection:
     self.socket.close()
 
   def login(self):
-    LoginMessage.__init__(conn).send() 
-       
+    g = GenericMessage(self,1, [self.properties['password'], self.properties['version'], self.properties['getContacts'], self.properties['capabilities'], self.properties['dc'], 
+                                self.properties['features'], self.properties['dialingCode'], self.properties['locale'], self.properties['maxReplyLen'], self.properties['protocolVer']]) #looks retarded
+    g.send()
+    pass

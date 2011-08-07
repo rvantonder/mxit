@@ -18,7 +18,7 @@ The Client GUI class.
 """
 
 class ClientForm(QtGui.QWidget):
-  def __init__(self, host, port, username, password, nick):
+  def __init__(self, host, port, username, password):
     super(ClientForm, self).__init__()
     self.connection = Connection(host, port, username, password)
 
@@ -37,7 +37,7 @@ class ClientForm(QtGui.QWidget):
       os.remove('client.log')
     self.clientLogger = Logger('client.log')
 
-    self.receiver = Receiver(self.client)
+    self.receiver = Receiver(self.connection)
     self.connect(self.receiver, QtCore.SIGNAL("Activated ( QString ) "), self.activated)
     self.receiver.start()
 
@@ -66,23 +66,24 @@ class ClientForm(QtGui.QWidget):
 
   def on_lineEdit_returnPressed(self):
     if self.ui.lineEdit.displayText() != '':
-      print 'sending',''.join(map(lambda x:chr(x), self.msg))
-      self.client.socket.send(str(''.join(map(lambda x:chr(x), self.msg))))
+      #print 'sending',''.join(map(lambda x:chr(x), self.msg))
+      print 'no action'
+      #self.connection.socket.send(str(''.join(map(lambda x:chr(x), self.msg))))
                    
     self.ui.lineEdit.setText('')
 
 class Receiver(QtCore.QThread):
-  def __init__(self, client): #parent = None
+  def __init__(self, connection): #parent = None
     parent = None
     QtCore.QThread.__init__(self,parent) #self,parent
     self.running = 1
-    self.client = client
+    self.connection = connection
 
   def run(self):
     while self.running:
       try:
-        response = self.client.socket.recv(self.client.size)
-        print response
+        response = self.connection.socket.recv(self.connection.size)
+        #print response
         display = filter(lambda x: ord(x) > 0x30, response)
         self.emit(QtCore.SIGNAL("Activated( QString )"), display)
       except socket.error:
