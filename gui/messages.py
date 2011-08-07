@@ -1,3 +1,6 @@
+def construct_msg(data):
+  
+
 class GenericMessage:
   def __init__(self, conn, cmd, data):
     self.conn = conn
@@ -6,6 +9,7 @@ class GenericMessage:
 
 
   def send(self):
+    messageToSend = construct_msg(self.data)
     
 
 class LoginMessage:

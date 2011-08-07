@@ -20,7 +20,7 @@ The Client GUI class.
 class ClientForm(QtGui.QWidget):
   def __init__(self, host, port, username, password, nick):
     super(ClientForm, self).__init__()
-    self.connection = Connection(host, port, username, password, nick)
+    self.connection = Connection(host, port, username, password)
 
 
     self.connection.connect()

@@ -14,8 +14,9 @@ class Connection:
     self.size = 1024
     self.socket = None
 
-    properties = {
-      'username':username,
+    self.username = username
+
+    self.properties = { 
       'password':password,
       'nick':nick,
       'version':'P- 5.9.0-Y-PURPLE', 
@@ -30,7 +31,6 @@ class Connection:
       'splashName':0
     }
 
-    set_attrs(self,properties,**params)
 
   def connect(self):
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -40,5 +40,5 @@ class Connection:
     self.socket.close()
 
   def login(self):
-     
+    LoginMessage.__init__(conn).send() 
        
