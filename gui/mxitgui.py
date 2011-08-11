@@ -25,6 +25,8 @@ class ClientForm(QtGui.QWidget):
     super(ClientForm, self).__init__()
     self.connection = Connection(host, port, username, password, dc)
 
+    self.connection.connect()
+
     self.ui = Ui_Form()
     self.ui.setupUi(self)
     self.ui.lineEdit.setFocus()
@@ -36,6 +38,8 @@ class ClientForm(QtGui.QWidget):
     self.receiver = Receiver(self.connection)
     self.connect(self.receiver, QtCore.SIGNAL("Activated ( QString ) "), self.activated)
     self.receiver.start()
+
+    self.connection.login() 
 
     self.msg = [0x6c, 0x6e, 0x3d, 0x31, 0x34, 0x35, 0x00, 0x69, 
 0x64, 0x3d, 0x66, 0x6c, 0x61, 0x74, 0x2e, 0x65, 
@@ -57,8 +61,6 @@ class ClientForm(QtGui.QWidget):
 0x34, 0x01, 0x65, 0x6e, 0x01, 0x31, 0x35, 0x30, 
 0x30, 0x30, 0x30, 0x01, 0x36, 0x30, 0x01, 0x30 ]
 
-    self.connection.connect()
-    self.connection.login() 
 
   def activated(self, text):
     self.ui.textEdit.append(text)
@@ -82,12 +84,16 @@ class Receiver(QtCore.QThread):
     while self.running:
       try:
         response = self.connection.socket.recv(self.connection.size)
-        #print response
-        display = filter(lambda x: ord(x) > 0x30, response)
+        if not response:
+          display = 'error'
+          self.connection.disconnect()
+        else: 
+          display = filter(lambda x: ord(x) > 0x29, response)
+          
         self.emit(QtCore.SIGNAL("Activated( QString )"), display)
         #return
       except socket.error:
         return
           
-    self.client.close_socket()
+    self.connection.disconnect() #TODO fix
 
