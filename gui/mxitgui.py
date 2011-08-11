@@ -88,6 +88,7 @@ class Receiver(QtCore.QThread):
           display = 'error'
           self.connection.disconnect()
         else: 
+          self.connection.parse_message(response) 
           display = filter(lambda x: ord(x) > 0x29, response)
           
         self.emit(QtCore.SIGNAL("Activated( QString )"), display)
