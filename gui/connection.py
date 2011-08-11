@@ -46,7 +46,14 @@ class Connection:
 
   def parse_message(self, response):
     print '-------------------------------------'
-    split_records = response.split('\0') 
-    split_fields = map(lambda x: x.split('\1'), split_records)
-    print split_fields
+    split_packets = response.split('ln=')[1:] #very nice
+    print 'response length',len(split_packets)
+    for i in split_packets:
+      self.parse_packet(i)
     print '-------------------------------------'
+
+  def parse_packet(self, packet):
+    split_records = packet.split('\0')
+    split_fields = map(lambda x: x.split('\1') if len(x.split('\1')) > 1 else x, split_records)
+    print split_fields
+
