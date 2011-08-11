@@ -21,16 +21,13 @@ def from_raw(msg):
   return ''.join(map(lambda x:chr(x), msg))
 
 class ClientForm(QtGui.QWidget):
-  def __init__(self, host, port, username, password):
+  def __init__(self, host, port, username, password, dc):
     super(ClientForm, self).__init__()
-    self.connection = Connection(host, port, username, password)
+    self.connection = Connection(host, port, username, password, dc)
 
     self.ui = Ui_Form()
     self.ui.setupUi(self)
     self.ui.lineEdit.setFocus()
-    self.auth = False
-    self.colour_list = (QtCore.Qt.red, QtCore.Qt.darkRed, QtCore.Qt.blue, QtCore.Qt.darkGreen, QtCore.Qt.magenta, QtCore.Qt.darkBlue, QtCore.Qt.darkCyan,QtCore.Qt.darkMagenta, QtCore.Qt.darkYellow, QtCore.Qt.darkGray, QtGui.QColor('#00CC99'), QtGui.QColor('#0099FF'), QtGui.QColor('#005555'), QtGui.QColor('#FF6600'), QtGui.QColor('#660033'), QtGui.QColor('#9900FF'))
-    self.user_colour_list = {}
     self.running = 1
     if os.path.isfile('client.log'):
       os.remove('client.log')
@@ -61,10 +58,6 @@ class ClientForm(QtGui.QWidget):
 0x30, 0x30, 0x30, 0x01, 0x36, 0x30, 0x01, 0x30 ]
 
     self.connection.connect()
-    print 'RIGHT'
-    print messageToHex(from_raw(self.msg)) 
-    print from_raw(self.msg)
-#    self.connection.socket.send(from_raw(self.msg))
     self.connection.login() 
 
   def activated(self, text):
@@ -92,6 +85,7 @@ class Receiver(QtCore.QThread):
         #print response
         display = filter(lambda x: ord(x) > 0x30, response)
         self.emit(QtCore.SIGNAL("Activated( QString )"), display)
+        #return
       except socket.error:
         return
           

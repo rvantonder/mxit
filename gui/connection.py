@@ -8,7 +8,7 @@ from messages import *
 
 class Connection:
 
-  def __init__(self, ip, port, username, password):
+  def __init__(self, ip, port, username, password, dc):
     self.host = ip
     self.port = port 
     self.size = 1024
@@ -19,19 +19,17 @@ class Connection:
     self.properties = { 
       'password':password,
       'version':'P-5.9.0-Y-PURPLE', 
-      'getContacts':'1',
+      'getContacts':1,
       'capabilities':'utf8=true;cid=LP',
-      #'dc':'4DF78289-3578-4701-81C1-760225BAE46C',
-      'dc':'E2379B55-94E1-4947-9497-5D3D2C946BFB',
-      #'features':255,
-      'features':1339754,
-      #'dialingCode':27,
-      'dialingCode':264,
+      'dc':dc,
+      'features':255,
+      'dialingCode':27,
       'locale':'en',
       'maxReplyLen':150000,
       'protocolVer':60,
     }
-
+  
+    self.login_properties = [password, 'P-5.9.0-Y-PURPLE', 1, 'utf8=true;cid=LP', dc, 255, 27, 'en', 150000, 60] 
 
   def connect(self):
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -41,7 +39,7 @@ class Connection:
     self.socket.close()
 
   def login(self):
-    g = GenericMessage(self,1, [self.properties['password'], self.properties['version'], self.properties['getContacts'], self.properties['capabilities'], self.properties['dc'], 
-                                self.properties['features'], self.properties['dialingCode'], self.properties['locale'], self.properties['maxReplyLen'], self.properties['protocolVer']]) #looks retarded
-    g.send()
-    pass
+#    g = GenericMessage(self,1, self.login_properties)  
+    #g.send()
+    l = LoginMessage(self)
+    l.send()
