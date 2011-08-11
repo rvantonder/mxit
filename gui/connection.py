@@ -43,3 +43,10 @@ class Connection:
     #g.send()
     l = LoginMessage(self)
     l.send()
+
+  def parse_message(self, response):
+    print '-------------------------------------'
+    split_records = response.split('\0') 
+    split_fields = map(lambda x: x.split('\1'), split_records)
+    print split_fields
+    print '-------------------------------------'
