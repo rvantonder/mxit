@@ -44,3 +44,8 @@ class Connection:
   def login(self):
     l = LoginMessage(self)
     l.send()
+
+  def send_message(self, data):
+    m = TextMessage(self,data)
+    m.send()
+    

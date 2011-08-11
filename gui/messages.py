@@ -25,3 +25,7 @@ class GenericMessage:
 class LoginMessage(GenericMessage):
   def __init__(self, conn):
     GenericMessage.__init__(self, conn, 1, conn.login_properties)  #enum with Mxit.LOGIN = 1 
+
+class TextMessage(GenericMessage):
+  def __init__(self, conn, data): #data is a tuple specifying the user id and the message
+    GenericMessage.__init__(self, conn, 10, data) 

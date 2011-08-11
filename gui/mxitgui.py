@@ -47,15 +47,17 @@ class ClientForm(QtGui.QWidget):
 
   def on_lineEdit_returnPressed(self):
     if self.ui.lineEdit.displayText() != '':
-      data = self.ui.lineEdit.displayText()
-      if not data.startswith(r'\msg')
-        self.ui.
-                   
-    self.ui.lineEdit.setText('')
-
+      data = str(self.ui.lineEdit.displayText())
+      if not data.startswith(r'\msg'):
+        self.ui.lineEdit.setText('Format: \msg <user> <message>')
+      else:
+        print data.split(' ')[1:] #TODO translate user to proper user
+        self.connection.send_message(data.split(' ')[1:]) #send the user and message as a list
+        self.ui.lineEdit.setText('')
+    
   def update_userlist(self, l):
     for i in l:
-      string = i[0] + ' ('+i[1]+')' + ' ('+i[2]+')' #TODO translate this
+      string = i[0] + ' (status:'+i[1]+')' + ' (mood:'+i[2]+')' #TODO translate this
       self.ui.listWidget.addItem(QtGui.QListWidgetItem(string))
 
 class Receiver(QtCore.QThread):
@@ -92,6 +94,8 @@ class Receiver(QtCore.QThread):
       if msg[1] == '3': #command is login
         for user in msg[3:-1]: #data lists of users 
           l.append((user[2],user[3],user[5])) #0: group 1: contact address 2:nick 3: presence 4: type 5: mood 6: flags 7: subtype
+      #elif msg[1] == '7': #command is 7
+      #  print 'command: 7'
 
         self.emit(QtCore.SIGNAL("update_userlist"), l)
         
