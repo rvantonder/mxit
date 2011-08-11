@@ -37,30 +37,10 @@ class ClientForm(QtGui.QWidget):
 
     self.receiver = Receiver(self.connection)
     self.connect(self.receiver, QtCore.SIGNAL("Activated ( QString ) "), self.activated)
+    self.connect(self.receiver, QtCore.SIGNAL("update_userlist"), self.update_userlist)
     self.receiver.start()
 
     self.connection.login() 
-
-    self.msg = [0x6c, 0x6e, 0x3d, 0x31, 0x34, 0x35, 0x00, 0x69, 
-0x64, 0x3d, 0x66, 0x6c, 0x61, 0x74, 0x2e, 0x65, 
-0x72, 0x69, 0x63, 0x00, 0x63, 0x6d, 0x3d, 0x31, 
-0x00, 0x6d, 0x73, 0x3d, 0x47, 0x2f, 0x67, 0x58, 
-0x41, 0x74, 0x59, 0x77, 0x38, 0x56, 0x64, 0x43, 
-0x5a, 0x4e, 0x4f, 0x61, 0x30, 0x41, 0x41, 0x73, 
-0x4b, 0x41, 0x3d, 0x3d, 0x01, 0x50, 0x2d, 0x35, 
-0x2e, 0x39, 0x2e, 0x30, 0x2d, 0x59, 0x2d, 0x50, 
-0x55, 0x52, 0x50, 0x4c, 0x45, 0x01, 0x31, 0x01, 
-0x75, 0x74, 0x66, 0x38, 0x3d, 0x74, 0x72, 0x75, 
-0x65, 0x3b, 0x63, 0x69, 0x64, 0x3d, 0x4c, 0x50, 
-0x01, 0x45, 0x32, 0x33, 0x37, 0x39, 0x42, 0x35, 
-0x35, 0x2d, 0x39, 0x34, 0x45, 0x31, 0x2d, 0x34, 
-0x39, 0x34, 0x37, 0x2d, 0x39, 0x34, 0x39, 0x37, 
-0x2d, 0x35, 0x44, 0x33, 0x44, 0x32, 0x43, 0x39, 
-0x34, 0x36, 0x42, 0x46, 0x42, 0x01, 0x31, 0x33, 
-0x33, 0x39, 0x37, 0x35, 0x34, 0x01, 0x32, 0x36, 
-0x34, 0x01, 0x65, 0x6e, 0x01, 0x31, 0x35, 0x30, 
-0x30, 0x30, 0x30, 0x01, 0x36, 0x30, 0x01, 0x30 ]
-
 
   def activated(self, text):
     self.ui.textEdit.append(text)
@@ -72,6 +52,11 @@ class ClientForm(QtGui.QWidget):
       #self.connection.socket.send(str(''.join(map(lambda x:chr(x), self.msg))))
                    
     self.ui.lineEdit.setText('')
+
+  def update_userlist(self, l):
+    for i in l:
+      string = i[0] + ' ('+i[1]+')' #TODO translate this
+      self.ui.listWidget.addItem(QtGui.QListWidgetItem(string))
 
 class Receiver(QtCore.QThread):
   def __init__(self, connection): #parent = None
@@ -88,8 +73,8 @@ class Receiver(QtCore.QThread):
           display = 'error'
           self.connection.disconnect()
         else: 
-          self.connection.parse_message(response) 
-          display = filter(lambda x: ord(x) > 0x29, response)
+          display = self.parse_message(response) 
+          display = filter(lambda x: ord(x) > 0x19, response)
           
         self.emit(QtCore.SIGNAL("Activated( QString )"), display)
         #return
@@ -97,4 +82,22 @@ class Receiver(QtCore.QThread):
         return
           
     self.connection.disconnect() #TODO fix
+
+  def parse_message(self, response):
+    split_packets = response.split('ln=')[1:] #very nice
+    l = []
+    for i in split_packets:
+      msg = self.parse_packet(i)
+      print msg
+      if msg[1] == '3': #command is login
+        for user in msg[3:-1]: #data lists of users 
+          l.append((user[2],user[3])) #0: group 1: contact address 2:nick 3: presence 4: type 5: mood 6: flags 7: subtype
+
+        self.emit(QtCore.SIGNAL("update_userlist"), l)
+        
+
+  def parse_packet(self, packet):
+    split_records = packet.split('\0')
+    split_fields = map(lambda x: x.split('\1') if len(x.split('\1')) > 1 else x, split_records)
+    return split_fields
 
