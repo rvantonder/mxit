@@ -94,7 +94,7 @@ class Receiver(QtCore.QThread):
       if msg[1] == '3': #command is login
         for user in msg[3:-1]: #data lists of users 
           l.append((user[2],user[3],user[5])) #0: group 1: contact address 2:nick 3: presence 4: type 5: mood 6: flags 7: subtype
-          self.emit(QtCore.SIGNAL("update_userlist"), l)
+        self.emit(QtCore.SIGNAL("update_userlist"), l)
       elif msg[1] == '7': #command is 7
         print 'command: 7'
 
