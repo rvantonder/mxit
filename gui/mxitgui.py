@@ -53,8 +53,10 @@ class ClientForm(QtGui.QWidget):
       if not data.startswith(r'\msg'):
         self.ui.lineEdit.setText('Format: \msg <user> <message>')
       else:
-        #print data.split(' ')[1:] #TODO translate user to proper user
-        self.connection.send_message(data.split(' ')[1:]) #send the user and message as a list
+        msg = ' '.join(data.split(' ')[2:])
+        u = data.split(' ')[1]
+        
+        self.connection.send_message([u,msg]) #send the user and message as a list
         self.ui.lineEdit.setText('')
     
   def update_userlist(self, l):
@@ -76,26 +78,32 @@ class ClientForm(QtGui.QWidget):
         string = nick + ' ('+status_text+')' + ' ('+mood_text+')' + ' (' + user_id + ')'
         item = QtGui.QListWidgetItem(string)
         item.setTextColor(QtCore.Qt.darkGreen)
-      elif status == Presence.AWAY: #TODO remove
-        string = nick + ' ('+status_text+')' + ' ('+mood_text+')' + ' (' + user_id + ')'
-        item = QtGui.QListWidgetItem(string)
-        item.setTextColor(QtCore.Qt.orange)
-      elif status == Presence.DO_NOT_DISTURB:#TODO remove
-        string = nick + ' ('+status_text+')' + ' ('+mood_text+')' + ' (' + user_id + ')' 
-        item = QtGui.QListWidgetItem(string)
-        item.setTextColor(QtCore.Qt.red)
 
       self.ui.listWidget.addItem(item)
 
   def update_user(self, l):
     user_id, presence, mood, status_message = l
+    status = presence 
+    mood = mood
+    status_text = Presence.status_list[int(status)]
+    mood_text = Mood.mood_list[int(mood)]
+
     try:
       item = self.ui.listWidget.findItems(user_id,QtCore.Qt.MatchContains)[0]
     except IndexError:
       print 'fuck'
-    item.setText(str(item.text()).split()[0] + ' (' + presence + ')' + ' (' + mood + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
-    item.setTextColor(QtCore.Qt.red)
-   
+    if status == Presence.OFFLINE:
+      item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + user_id + ')')
+      item.setTextColor(QtCore.Qt.gray)
+    elif status == Presence.ONLINE:
+      item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
+      item.setTextColor(QtCore.Qt.darkGreen)
+    elif status == Presence.AWAY:
+      item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
+      item.setTextColor(QtCore.Qt.orange)
+    elif status == Presence.DO_NOT_DISTURB:
+      item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
+      item.setTextColor(QtCore.Qt.red)
 
 class Receiver(QtCore.QThread):
   def __init__(self, connection): #parent = None
