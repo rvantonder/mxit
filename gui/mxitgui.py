@@ -9,7 +9,7 @@ import threading
 from logger import Logger
 import pickle
 import os
-import time
+from enums import *
 
 from PyQt4 import QtCore, QtGui
 from mxitwindow import Ui_Form
@@ -39,6 +39,7 @@ class ClientForm(QtGui.QWidget):
     self.receiver = Receiver(self.connection)
     self.connect(self.receiver, QtCore.SIGNAL("Activated ( QString ) "), self.activated)
     self.connect(self.receiver, QtCore.SIGNAL("update_userlist"), self.update_userlist)
+    self.connect(self.receiver, QtCore.SIGNAL("update_user"), self.update_user)
     self.receiver.start()
 
     self.connection.login() 
@@ -52,14 +53,41 @@ class ClientForm(QtGui.QWidget):
       if not data.startswith(r'\msg'):
         self.ui.lineEdit.setText('Format: \msg <user> <message>')
       else:
-        print data.split(' ')[1:] #TODO translate user to proper user
+        #print data.split(' ')[1:] #TODO translate user to proper user
         self.connection.send_message(data.split(' ')[1:]) #send the user and message as a list
         self.ui.lineEdit.setText('')
     
   def update_userlist(self, l):
+    self.ui.listWidget.clear()
     for i in l:
-      string = i[0] + ' (status:'+i[1]+')' + ' (mood:'+i[2]+')' #TODO translate this
-      self.ui.listWidget.addItem(QtGui.QListWidgetItem(string))
+      user_id = i[0]
+      status = i[1]
+      mood = i[2]
+      status_text = Presence.status_list[int(status)]
+      mood_text = Mood.mood_list[int(mood)]
+      item = None
+
+      if status == Presence.OFFLINE: 
+        string = user_id + ' (' + status_text + ')'
+        item = QtGui.QListWidgetItem(string)
+        item.setTextColor(QtCore.Qt.gray)
+      elif status == Presence.ONLINE:
+        string = user_id + ' ('+status_text+')' + ' ('+mood_text+')'
+        item = QtGui.QListWidgetItem(string)
+        item.setTextColor(QtCore.Qt.darkGreen)
+      elif status == Presence.AWAY: #TODO remove
+        string = user_id + ' ('+status_text+')' + ' ('+mood_text+')'
+        item = QtGui.QListWidgetItem(string)
+        item.setTextColor(QtCore.Qt.orange)
+      elif status == Presence.DO_NOT_DISTURB:#TODO remove
+        string = user_id + ' ('+status_text+')' + ' ('+mood_text+')'
+        item = QtGui.QListWidgetItem(string)
+        item.setTextColor(QtCore.Qt.red)
+
+      self.ui.listWidget.addItem(item)
+
+  def update_user(self, user_id, presence, mood, status_message):
+    pass
 
 class Receiver(QtCore.QThread):
   def __init__(self, connection): #parent = None
@@ -67,6 +95,7 @@ class Receiver(QtCore.QThread):
     QtCore.QThread.__init__(self,parent) #self,parent
     self.running = 1
     self.connection = connection
+    self.message_command = ''
 
   def run(self):
     while self.running:
@@ -91,25 +120,28 @@ class Receiver(QtCore.QThread):
     l = []
     for i in split_packets:
       msg = self.parse_packet(i)
-      print msg
-      if msg[1] == '3': #command is login
-        for user in msg[3:-1]: #data lists of users 
-          l.append((user[2],user[3],user[5])) #0: group 1: contact address 2:nick 3: presence 4: type 5: mood 6: flags 7: subtype
-        self.emit(QtCore.SIGNAL("update_userlist"), l)
-      elif msg[1] == '7': #command is 7 presence
-        print 'command: 7'
-      elif msg[1] == '9': #new message
-        t = time.ctime(int(msg[3][1])).split()[3]
-        return '[' + t + '] ' + msg[3][0] +': ' + msg[-1]
+      if self.message_command == Command.GET_CONTACTS:
+        response = LoginResponse(msg)
+        returnValue = response.process()
+        self.emit(QtCore.SIGNAL("update_userlist"), returnValue)
+      elif self.message_command == Command.PRESENCE: #command is 7 presence
+        response = PresenceResponse(msg)
+        returnValue = response.process()
+        self.emit(QtCore.SIGNAL("update_user"), returnValue) #returnValue contains the status, mood, and message
+        pass
+      elif self.message_command == Command.GET_MESSAGE: #new message
+        response = TextMessageResponse(msg)
+        returnValue = response.process()
+        return returnValue
+    
+#    if not self.message_command == Command.GET_CONTACTS:
+    print msg
 
-    print 'Last receive',msg  
     return 'Not Implemented Yet'
-        
-
-        
 
   def parse_packet(self, packet):
     split_records = packet.split('\0')
     split_fields = map(lambda x: x.split('\1') if len(x.split('\1')) > 1 else x, split_records)
+    self.message_command = split_fields[1]
     return split_fields
 

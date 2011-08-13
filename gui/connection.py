@@ -48,4 +48,9 @@ class Connection:
   def send_message(self, data):
     m = TextMessage(self,data)
     m.send()
+
+  def get_contacts(self):
+    r = GetContactsMessage(self)
+    r.send()
+    
     
