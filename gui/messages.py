@@ -66,7 +66,7 @@ class LoginResponse(MessageResponse):
     if self.check_error(): return None 
     l = []
     for user in self.msg[3:-1]: #data lists of users 
-      l.append((user[2],user[3],user[5])) #0: group 1: contact address 2:nick 3: presence 4: type 5: mood 6: flags 7: subtype
+      l.append((user[1],user[2],user[3],user[5])) #0: group 1: contact address 2:nick 3: presence 4: type 5: mood 6: flags 7: subtype
     return l
 
 class PresenceResponse(MessageResponse):

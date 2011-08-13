@@ -11,7 +11,7 @@ import pickle
 import os
 from enums import *
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui, Qt
 from mxitwindow import Ui_Form
 
 """
@@ -61,33 +61,41 @@ class ClientForm(QtGui.QWidget):
     self.ui.listWidget.clear()
     for i in l:
       user_id = i[0]
-      status = i[1]
-      mood = i[2]
+      nick = i[1]
+      status = i[2]
+      mood = i[3]
       status_text = Presence.status_list[int(status)]
       mood_text = Mood.mood_list[int(mood)]
       item = None
 
       if status == Presence.OFFLINE: 
-        string = user_id + ' (' + status_text + ')'
+        string = nick + ' (' + status_text + ')' + ' (' + user_id + ')'
         item = QtGui.QListWidgetItem(string)
         item.setTextColor(QtCore.Qt.gray)
       elif status == Presence.ONLINE:
-        string = user_id + ' ('+status_text+')' + ' ('+mood_text+')'
+        string = nick + ' ('+status_text+')' + ' ('+mood_text+')' + ' (' + user_id + ')'
         item = QtGui.QListWidgetItem(string)
         item.setTextColor(QtCore.Qt.darkGreen)
       elif status == Presence.AWAY: #TODO remove
-        string = user_id + ' ('+status_text+')' + ' ('+mood_text+')'
+        string = nick + ' ('+status_text+')' + ' ('+mood_text+')' + ' (' + user_id + ')'
         item = QtGui.QListWidgetItem(string)
         item.setTextColor(QtCore.Qt.orange)
       elif status == Presence.DO_NOT_DISTURB:#TODO remove
-        string = user_id + ' ('+status_text+')' + ' ('+mood_text+')'
+        string = nick + ' ('+status_text+')' + ' ('+mood_text+')' + ' (' + user_id + ')' 
         item = QtGui.QListWidgetItem(string)
         item.setTextColor(QtCore.Qt.red)
 
       self.ui.listWidget.addItem(item)
 
-  def update_user(self, user_id, presence, mood, status_message):
-    pass
+  def update_user(self, l):
+    user_id, presence, mood, status_message = l
+    try:
+      item = self.ui.listWidget.findItems(user_id,QtCore.Qt.MatchContains)[0]
+    except IndexError:
+      print 'fuck'
+    item.setText(str(item.text()).split()[0] + ' (' + presence + ')' + ' (' + mood + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
+    item.setTextColor(QtCore.Qt.red)
+   
 
 class Receiver(QtCore.QThread):
   def __init__(self, connection): #parent = None
@@ -127,8 +135,8 @@ class Receiver(QtCore.QThread):
       elif self.message_command == Command.PRESENCE: #command is 7 presence
         response = PresenceResponse(msg)
         returnValue = response.process()
+        print 'calling update user'
         self.emit(QtCore.SIGNAL("update_user"), returnValue) #returnValue contains the status, mood, and message
-        pass
       elif self.message_command == Command.GET_MESSAGE: #new message
         response = TextMessageResponse(msg)
         returnValue = response.process()
