@@ -27,5 +27,9 @@ class LoginMessage(GenericMessage):
     GenericMessage.__init__(self, conn, 1, conn.login_properties)  #enum with Mxit.LOGIN = 1 
 
 class TextMessage(GenericMessage):
-  def __init__(self, conn, data): #data is a tuple specifying the user id and the message
-    GenericMessage.__init__(self, conn, 10, data) 
+  def __init__(self, conn, data): #data is a list specifying the user id and the message
+    GenericMessage.__init__(self, conn, 10, data) #TODO enum
+
+
+class MessageTree: #this will parse the message into a tree
+  def __init__(self):

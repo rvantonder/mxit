@@ -9,6 +9,7 @@ import threading
 from logger import Logger
 import pickle
 import os
+import time
 
 from PyQt4 import QtCore, QtGui
 from mxitwindow import Ui_Form
@@ -76,7 +77,7 @@ class Receiver(QtCore.QThread):
           self.connection.disconnect()
         else: 
           display = self.parse_message(response) 
-          display = filter(lambda x: ord(x) > 0x19, response)
+          #filter(lambda x: ord(x) > 0x19, response)
           
         self.emit(QtCore.SIGNAL("Activated( QString )"), display)
         #return
@@ -95,10 +96,16 @@ class Receiver(QtCore.QThread):
         for user in msg[3:-1]: #data lists of users 
           l.append((user[2],user[3],user[5])) #0: group 1: contact address 2:nick 3: presence 4: type 5: mood 6: flags 7: subtype
         self.emit(QtCore.SIGNAL("update_userlist"), l)
-      elif msg[1] == '7': #command is 7
+      elif msg[1] == '7': #command is 7 presence
         print 'command: 7'
+      elif msg[1] == '9': #new message
+        t = time.ctime(int(msg[3][1])).split()[3]
+        return '[' + t + '] ' + msg[3][0] +': ' + msg[-1]
 
-        self.emit(QtCore.SIGNAL("update_userlist"), l)
+    print 'Last receive',msg  
+    return 'Not Implemented Yet'
+        
+
         
 
   def parse_packet(self, packet):

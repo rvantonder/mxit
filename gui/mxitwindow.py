@@ -12,10 +12,10 @@ from PyQt4 import QtCore, QtGui
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(518, 189)
+        Form.resize(560, 189)
 #        Form.setWindowIcon(QtGui.QIcon('tray.png'))
         self.listWidget = QtGui.QListWidget(Form)
-        self.listWidget.setGeometry(QtCore.QRect(340, 10, 171, 171))
+        self.listWidget.setGeometry(QtCore.QRect(340, 10, 215, 171))
         self.listWidget.setAutoFillBackground(False)
         self.listWidget.setStyleSheet("color: rgb(0, 85, 0)")
         self.listWidget.setObjectName("listWidget")
