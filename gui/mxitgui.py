@@ -50,14 +50,19 @@ class ClientForm(QtGui.QWidget):
   def on_lineEdit_returnPressed(self):
     if self.ui.lineEdit.displayText() != '':
       data = str(self.ui.lineEdit.displayText())
-      if not data.startswith(r'\msg'):
-        self.ui.lineEdit.setText('Format: \msg <user> <message>')
+      if not data.startswith(r'\msg '):
+        self.ui.lineEdit.setText('Format: \msg <user_id> <message>')
       else:
         msg = ' '.join(data.split(' ')[2:])
         u = data.split(' ')[1]
-        
-        self.connection.send_message([u,msg]) #send the user and message as a list
-        self.ui.lineEdit.setText('')
+        if u == '' or msg == '':
+          self.ui.lineEdit.setText('Format: \msg <user_id> <message>')
+        else:
+          try:
+            self.connection.send_message([u,msg]) #send the user and message as a list
+          except socket.error:
+            self.ui.lineEdit.setText('You cannot send messages because you are not connected')
+          self.ui.lineEdit.setText('')
     
   def update_userlist(self, l):
     self.ui.listWidget.clear()
@@ -90,20 +95,21 @@ class ClientForm(QtGui.QWidget):
 
     try:
       item = self.ui.listWidget.findItems(user_id,QtCore.Qt.MatchContains)[0]
+
+      if status == Presence.OFFLINE:
+        item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + user_id + ')')
+        item.setTextColor(QtCore.Qt.gray)
+      elif status == Presence.ONLINE:
+        item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
+        item.setTextColor(QtCore.Qt.darkGreen)
+      elif status == Presence.AWAY:
+        item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
+        item.setTextColor(QtGui.QColor('#FF6600'))
+      elif status == Presence.DO_NOT_DISTURB:
+        item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
+        item.setTextColor(QtCore.Qt.red)
     except IndexError:
-      print 'fuck'
-    if status == Presence.OFFLINE:
-      item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + user_id + ')')
-      item.setTextColor(QtCore.Qt.gray)
-    elif status == Presence.ONLINE:
-      item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
-      item.setTextColor(QtCore.Qt.darkGreen)
-    elif status == Presence.AWAY:
-      item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
-      item.setTextColor(QtCore.Qt.orange)
-    elif status == Presence.DO_NOT_DISTURB:
-      item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
-      item.setTextColor(QtCore.Qt.red)
+      print 'Error in creating user list'
 
 class Receiver(QtCore.QThread):
   def __init__(self, connection): #parent = None
@@ -118,41 +124,60 @@ class Receiver(QtCore.QThread):
       try:
         response = self.connection.socket.recv(self.connection.size)
         if not response:
-          display = 'error'
           self.connection.disconnect()
+          self.emit(QtCore.SIGNAL("Activated( QString )"), 'A connection error occurred, disconnected')
         else: 
           display = self.parse_message(response) 
-          #filter(lambda x: ord(x) > 0x19, response)
-          
-        self.emit(QtCore.SIGNAL("Activated( QString )"), display)
-        #return
+          if not display == None:
+            self.emit(QtCore.SIGNAL("Activated( QString )"), display)
       except socket.error:
+        print 'An unexpected error occurred, disconnecting.'
         return
           
-    self.connection.disconnect() #TODO fix
+    self.connection.disconnect() #if the loop is exited, disconnect 
 
   def parse_message(self, response):
     split_packets = response.split('ln=')[1:] #very nice
     l = []
     for i in split_packets:
       msg = self.parse_packet(i)
-      if self.message_command == Command.GET_CONTACTS:
+      print msg
+      if self.message_command == Command.LOGIN: #this happens when a user logs in while mxit already sees them as being logged in
+        self.emit(QtCore.SIGNAL("Activated( QString )"), 'Login successful, this is your current session')  
+      elif self.message_command == Command.LOGOUT:
+        response = LogoutResponse(msg)
+        returnValue = response.process()
+        if returnValue: #an error, such as logging in from another location
+          return response.get_error()
+        else:
+          return 'Logout Successful'
+      elif self.message_command == Command.GET_CONTACTS:
         response = LoginResponse(msg)
         returnValue = response.process()
         self.emit(QtCore.SIGNAL("update_userlist"), returnValue)
-      elif self.message_command == Command.PRESENCE: #command is 7 presence
+        return None
+      elif self.message_command == Command.PRESENCE: 
         response = PresenceResponse(msg)
         returnValue = response.process()
-        print 'calling update user'
         self.emit(QtCore.SIGNAL("update_user"), returnValue) #returnValue contains the status, mood, and message
-      elif self.message_command == Command.GET_MESSAGE: #new message
+        return None
+      elif self.message_command == Command.GET_MESSAGE: 
         response = TextMessageResponse(msg)
         returnValue = response.process()
         return returnValue
+      elif self.message_command == Command.SEND_MESSAGE:
+        response = MessageSentResponse(msg)
+        returnValue = response.process()
+        if returnValue: #there was an error
+          return response.get_error()
+        else:
+          return None #the message was successfully sent
+      else:
+        response = MessageResponse(msg)
+        returnValue = response.process()
+        return returnValue
     
-#    if not self.message_command == Command.GET_CONTACTS:
     print msg
-
     return 'Not Implemented Yet'
 
   def parse_packet(self, packet):

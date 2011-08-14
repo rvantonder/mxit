@@ -50,13 +50,21 @@ class MessageResponse: #this will parse the message into a tree
     self.ln = msg[0]
     self.cmd = msg[1]
     self.error = msg[2]
+    self.error_code = ''
+    self.error_message = ''
 
   def process(self):
-    pass
+    return 'Command ' + self.cmd + ' with data ' + ' '.join(self.msg) + ' has not been implemented yet'
 
   def check_error(self):
+    if not self.error == Error.NONE:
+      self.error_code = self.error[0]
+      self.error_message = self.error[1]
+
     return not self.error == Error.NONE
-      
+
+  def get_error(self):
+    return '[Error code ' + self.error_code + '] ' + ' ' + self.error_message
 
 class LoginResponse(MessageResponse):
   def __init__(self, msg):
@@ -68,6 +76,13 @@ class LoginResponse(MessageResponse):
     for user in self.msg[3:-1]: #data lists of users 
       l.append((user[1],user[2],user[3],user[5])) #0: group 1: contact address 2:nick 3: presence 4: type 5: mood 6: flags 7: subtype
     return l
+
+class LogoutResponse(MessageResponse):
+  def __init__(self, msg):
+    MessageResponse.__init__(self, msg)
+
+  def process(self):
+    return self.check_error()
 
 class PresenceResponse(MessageResponse):
   def __init__(self, msg):
@@ -89,7 +104,17 @@ class TextMessageResponse(MessageResponse):
     if self.check_error(): return None
 
     t = time.ctime(int(self.msg[3][1])).split()[3]
-    return '[' + t + '] ' + self.msg[3][0] +': ' + self.msg[-1]
+    if not self.msg[-1] == '': #only display non empty messages, for some reason pidgin likes sending empty messages
+      return '[' + t + '] ' + self.msg[3][0] +': ' + self.msg[-1]
+    else:
+      return None
+
+class MessageSentResponse(MessageResponse):
+  def __init__(self, msg):
+    MessageResponse.__init__(self, msg)
+
+  def process(self):
+    return self.check_error()
  
     
     

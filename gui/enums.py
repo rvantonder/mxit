@@ -59,8 +59,13 @@ class Mood:
   HOT = '8'
   SICK = '9'
   SLEEPY = '10'
+  BORED = '11'
+  COLD = '12'
+  CONFUSED = '13'
+  HUNGRY = '14'
+  STRESSED = '15'
 
-  mood_list = ['None', 'Angry', 'Excited', 'Grumpy', 'Happy', 'In love', 'Invincible', 'Sad', 'Hot', 'Sick', 'Sleepy']
+  mood_list = ['None', 'Angry', 'Excited', 'Grumpy', 'Happy', 'In love', 'Invincible', 'Sad', 'Hot', 'Sick', 'Sleepy', 'Bored', 'Cold', 'Confused', 'Hungry', 'Stressed']
 
 if __name__ == '__main__':
   print Command.LOGIN
