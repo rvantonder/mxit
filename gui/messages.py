@@ -54,7 +54,9 @@ class MessageResponse: #this will parse the message into a tree
     self.error_message = ''
 
   def process(self):
-    return 'Command ' + self.cmd + ' with data ' + ' '.join(self.msg) + ' has not been implemented yet'
+    print self.cmd
+    print self.msg
+    return 'Command [' + self.cmd + '] has not been implemented yet/is not supported'
 
   def check_error(self):
     if not self.error == Error.NONE:
@@ -66,7 +68,15 @@ class MessageResponse: #this will parse the message into a tree
   def get_error(self):
     return '[Error code ' + self.error_code + '] ' + ' ' + self.error_message
 
+
 class LoginResponse(MessageResponse):
+  def __init__(self, msg):
+    MessageResponse.__init__(self, msg)
+
+  def process(self):
+    return self.check_error()
+
+class GetContactsResponse(MessageResponse):
   def __init__(self, msg):
     MessageResponse.__init__(self, msg)
 

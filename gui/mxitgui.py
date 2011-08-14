@@ -60,6 +60,7 @@ class ClientForm(QtGui.QWidget):
         else:
           try:
             self.connection.send_message([u,msg]) #send the user and message as a list
+            self.ui.textEdit.append(self.connection.id + ': ' + u + ', ' + msg)
           except socket.error:
             self.ui.lineEdit.setText('You cannot send messages because you are not connected')
           self.ui.lineEdit.setText('')
@@ -143,7 +144,12 @@ class Receiver(QtCore.QThread):
       msg = self.parse_packet(i)
       print msg
       if self.message_command == Command.LOGIN: #this happens when a user logs in while mxit already sees them as being logged in
-        self.emit(QtCore.SIGNAL("Activated( QString )"), 'Login successful, this is your current session')  
+        response = LoginResponse(msg)
+        returnValue = response.process()
+        if returnValue: #there was an error
+          return response.get_error()
+        else:
+          self.emit(QtCore.SIGNAL("Activated( QString )"), 'Login successful, this is your current session')  
       elif self.message_command == Command.LOGOUT:
         response = LogoutResponse(msg)
         returnValue = response.process()
@@ -152,7 +158,7 @@ class Receiver(QtCore.QThread):
         else:
           return 'Logout Successful'
       elif self.message_command == Command.GET_CONTACTS:
-        response = LoginResponse(msg)
+        response = GetContactsResponse(msg)
         returnValue = response.process()
         self.emit(QtCore.SIGNAL("update_userlist"), returnValue)
         return None
@@ -177,8 +183,8 @@ class Receiver(QtCore.QThread):
         returnValue = response.process()
         return returnValue
     
-    print msg
-    return 'Not Implemented Yet'
+    #print msg
+    #return 'Not Implemented Yet'
 
   def parse_packet(self, packet):
     split_records = packet.split('\0')
