@@ -49,14 +49,16 @@ class ClientForm(QtGui.QWidget):
 
   def on_lineEdit_returnPressed(self):
     if self.ui.lineEdit.displayText() != '':
-      data = str(self.ui.lineEdit.displayText())
-      if not data.startswith(r'\msg '):
-        self.ui.lineEdit.setText('Format: \msg <user_id> <message>')
-      else:
-        msg = ' '.join(data.split(' ')[2:])
-        u = data.split(' ')[1]
+      msg = str(self.ui.lineEdit.displayText())
+
+      selected_item = self.ui.listWidget.selectedItems()
+      if not len(selected_item) == 1:
+        self.ui.lineEdit.setText('Select a user')
+      elif len(selected_item) == 1:
+        u = str(selected_item[0].text()).split()[-1]
+
         if u == '' or msg == '':
-          self.ui.lineEdit.setText('Format: \msg <user_id> <message>')
+          self.ui.lineEdit.setText('Enter a non-blank message')
         else:
           try:
             self.connection.send_message([u,msg]) #send the user and message as a list
@@ -77,11 +79,11 @@ class ClientForm(QtGui.QWidget):
       item = None
 
       if status == Presence.OFFLINE: 
-        string = nick + ' (' + status_text + ')' + ' (' + user_id + ')'
+        string = nick + ' (' + status_text + '), ' + user_id 
         item = QtGui.QListWidgetItem(string)
         item.setTextColor(QtCore.Qt.gray)
       elif status == Presence.ONLINE:
-        string = nick + ' ('+status_text+')' + ' ('+mood_text+')' + ' (' + user_id + ')'
+        string = nick + ' ('+status_text+')' + ' ('+mood_text+'), ' + user_id 
         item = QtGui.QListWidgetItem(string)
         item.setTextColor(QtCore.Qt.darkGreen)
 
@@ -98,16 +100,16 @@ class ClientForm(QtGui.QWidget):
       item = self.ui.listWidget.findItems(user_id,QtCore.Qt.MatchContains)[0]
 
       if status == Presence.OFFLINE:
-        item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + user_id + ')')
+        item.setText(str(item.text()).split()[0] + ' (' + status_text + '), ' + user_id)
         item.setTextColor(QtCore.Qt.gray)
       elif status == Presence.ONLINE:
-        item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
+        item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + '), ' + user_id)
         item.setTextColor(QtCore.Qt.darkGreen)
       elif status == Presence.AWAY:
-        item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
+        item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + '), ' + user_id)
         item.setTextColor(QtGui.QColor('#FF6600'))
       elif status == Presence.DO_NOT_DISTURB:
-        item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + ')' + ' (' + user_id + ')')
+        item.setText(str(item.text()).split()[0] + ' (' + status_text + ')' + ' (' + mood_text + ')' + ' (' + status_message + '), ' + user_id)
         item.setTextColor(QtCore.Qt.red)
     except IndexError:
       print 'Error in creating user list'
